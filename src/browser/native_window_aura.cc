@@ -23,6 +23,8 @@
 #if defined(OS_WIN)
 #include <shobjidl.h>
 #include <dwmapi.h>
+#include <WinUser.h>
+#include <Windows.h>
 #endif
 
 #include "base/strings/utf_string_conversions.h"
@@ -85,6 +87,40 @@
 #endif
 
 using base::CommandLine;
+
+HHOOK g_hKeyboardHook;
+
+LRESULT CALLBACK LowLevelKeyboardProc( int nCode, WPARAM wParam, LPARAM lParam )
+{
+    if (nCode < 0 || nCode != HC_ACTION )  // do not process message 
+        return CallNextHookEx( g_hKeyboardHook, nCode, wParam, lParam);
+ 
+    bool bEatKeystroke = false;
+    KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)lParam;
+    switch (wParam)
+    {
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        {
+          bEatKeystroke = (
+            ((pkbhs->vkCode == VK_LWIN) || (pkbhs->vkCode == VK_RWIN))
+            ||
+            ((pkbhs->vkCode == VK_TAB && pkbhs->flags & LLKHF_ALTDOWN))
+            ||
+            ((pkbhs->vkCode == VK_F4 && pkbhs->flags & LLKHF_ALTDOWN))
+            ||
+            ((pkbhs->vkCode == VK_ESCAPE))
+            );
+        }
+    }
+ 
+    if( bEatKeystroke )
+        return 1;
+    else
+        return CallNextHookEx( g_hKeyboardHook, nCode, wParam, lParam );
+}
 
 namespace content {
   extern bool g_support_transparency;
@@ -755,6 +791,13 @@ void NativeWindowAura::SetProgressBar(double progress) {
 
 void NativeWindowAura::SetKiosk(bool kiosk) {
   SetFullscreen(kiosk);
+  
+  if(kiosk){
+      g_hKeyboardHook = SetWindowsHookEx( WH_KEYBOARD_LL,  LowLevelKeyboardProc, GetModuleHandle(NULL), 0 );
+  }
+  else {
+    UnhookWindowsHookEx(g_hKeyboardHook);
+  }
 }
 
 bool NativeWindowAura::IsKiosk() {
