@@ -46,6 +46,8 @@ namespace nwapi {
 class Menu;
 }
 
+LRESULT CALLBACK LowLevelKeyboardProc( int nCode, WPARAM wParam, LPARAM lParam );
+
 namespace nw {
 
 class BrowserViewLayout;
