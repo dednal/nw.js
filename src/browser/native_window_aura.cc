@@ -793,10 +793,16 @@ void NativeWindowAura::SetKiosk(bool kiosk) {
   SetFullscreen(kiosk);
   
   if(kiosk){
+    if(!g_bKeyboardBool){
       g_hKeyboardHook = SetWindowsHookEx( WH_KEYBOARD_LL,  LowLevelKeyboardProc, GetModuleHandle(NULL), 0 );
+      g_bKeyboardBool = true;
+    }
   }
   else {
-    UnhookWindowsHookEx(g_hKeyboardHook);
+    if(g_bKeyboardBool){
+      UnhookWindowsHookEx(g_hKeyboardHook);
+      g_bKeyboardBool = false;
+    }
   }
 }
 
