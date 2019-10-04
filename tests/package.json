@@ -7,7 +7,7 @@
     "show": false
   },
   "dependencies": {
-    "http-auth":"2.1.8",
+    "http-auth":"3.2.4",
     "http-proxy":"1.1.4",
     "tar": "*",
     "commander": "0.6.1",
